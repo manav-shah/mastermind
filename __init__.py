@@ -1,1 +1,1 @@
-name = "mastermind"
+name = 'mastermimd'
