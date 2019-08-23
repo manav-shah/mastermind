@@ -69,7 +69,7 @@ def check_solution(guess,SECRETCODE):
             #override values since they have been considered once
             SECRETCODE[i]=None
             guess[i]=None
-            response.append(WHITE)
+            response.append(BLACK)
     for i,color in enumerate(guess):
         if color == None:
             #overriden value
@@ -79,7 +79,7 @@ def check_solution(guess,SECRETCODE):
             guess[i]=None
             x=SECRETCODE.index(color)
             SECRETCODE[x]=None
-            response.append(BLACK)
+            response.append(WHITE)
     return response
     
 def draw_hidden_code():

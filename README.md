@@ -9,8 +9,8 @@ This project is an attempt to recreate the board game Mastermind using Python an
  your choices
 * To make a guess, click on the highest colored row to toggle their colours. There are 6 possible colors (Red,Blue,Yellow,Green,Pink,Brown). After toggling the colors, click on the green submit button.
 * You will receive a response feedback of white and black dots. There can be 0-4 dots. 
-* A white dot indicates that one of the colors in your guess is the correct color and in the correct position. A black dot indicates one of the colors in your guesses is correct, but in the wrong position. (Note: The order of the white/black dots is not significant)
-* If a white dot was awarded for one of the colors in your guess, it can't be awarded a black dot if that color appears again in the code.
-Ex: If you guess \[RED BLUE BLUE BLUE] and the code is \[RED RED GREEN GREEN], you will be given one white dot for the first red in the code. But you won't receive a black dot for the second red in the code, since your guess doesn't have a second red.
+* A black dot indicates that one of the colors in your guess is the correct color and in the correct position. A white dot indicates one of the colors in your guesses is correct, but in the wrong position. (Note: The order of the white/black dots is not significant)
+* If a black dot was awarded for one of the colors in your guess, it can't be awarded a white dot if that color appears again in the code.
+Ex: If you guess \[RED BLUE BLUE BLUE] and the code is \[RED RED GREEN GREEN], you will be given one black dot for the first red in the code. But you won't receive a white dot for the second red in the code, since your guess doesn't have a second red.
 
 Refer to license.txt for license.
