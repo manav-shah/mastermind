@@ -120,7 +120,7 @@ def victory_animation(background,SECRETCODE):
     pygame.display.update()
     
     #Play sound effect
-    pygame.mixer.music.load('assets\\victory.mp3')
+    pygame.mixer.music.load('assets/victory.mp3')
     pygame.mixer.music.play()
     time.sleep(3)
     pygame.mixer.music.stop()
@@ -195,7 +195,6 @@ def main():
     SECRETCODE = get_random_secret_code(COLORS)
 
     draw_hidden_code()
-    show_hidden_code(SECRETCODE)
     
     #Create submit box
     submitbox = new_submit_box(attempts_left)
