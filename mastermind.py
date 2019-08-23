@@ -94,7 +94,7 @@ def draw_hidden_code():
         fontObj.render_to(DISPLAYSURF,(155+(i*CIRCLE_GAP),26),'?')
         
     
-def show_secret_code(code):
+def show_hidden_code(code):
     '''Displays the hidden secret code'''
     for i,color in enumerate(code): 
         pygame.draw.circle(DISPLAYSURF,color,(INITIAL_CIRCLE_X+(i*CIRCLE_GAP),
@@ -102,14 +102,15 @@ def show_secret_code(code):
         pygame.display.update()
         
 def victory_animation(background,SECRETCODE):
-    show_secret_code(SECRETCODE)
+    '''Plays winning animation. Trigger when code is guessed correctly'''
+    show_hidden_code(SECRETCODE)
     time.sleep(1)
     
     #Reset screen
     DISPLAYSURF.blit(background,(0,0))
     
     #Draw victory image and text on screen
-    imageSurf = pygame.image.load('assets\\einstein.png')
+    imageSurf = pygame.image.load('assets/einstein.png')
     imageSurf.convert_alpha()
     DISPLAYSURF.blit(imageSurf,(0,200))
     fontObj=pygame.freetype.SysFont('comicsansms',40,bold=True)
@@ -127,9 +128,12 @@ def victory_animation(background,SECRETCODE):
     sys.exit()
     
 def losing_animation(background,SECRETCODE):
-    show_secret_code(SECRETCODE)
+    '''Plays losing animation. Trigerred when player runs out of attempts'''
+    show_hidden_code(SECRETCODE)
     time.sleep(2)
+    #Reset screen
     DISPLAYSURF.blit(background,(0,0))
+    #Display text
     fontObj=pygame.freetype.SysFont('comicsansms',40,bold=True)
     fontObj.render_to(DISPLAYSURF,(95,50),'You just lost!')
     pygame.display.update()
@@ -139,31 +143,33 @@ def losing_animation(background,SECRETCODE):
     
 def draw_response(response,attempts_left):
     '''Turns pre-shuffled response list to drawings. Draws circles in correct position based on how many attempts left'''
-    attempt=10-attempts_left
-    pygame.draw.rect(DISPLAYSURF,DARKERBROWN,(8,732-(72*attempt),85,51))
-    responseCoordinates = [(33,48+(72*attempts_left)),(33,24+(72*attempts_left)),(66,48+(72*attempts_left)),(66,24+(72*attempts_left))]
+    #Draw brown box
+    pygame.draw.rect(DISPLAYSURF,DARKERBROWN,(8,12+(attempts_left*ROW_HEIGHT),85,51))
+    #Draw colored response dots
+    responseCoordinates = [(33,48+(attempts_left*ROW_HEIGHT)),(33,24+(attempts_left*ROW_HEIGHT)),
+                           (66,48+(attempts_left*ROW_HEIGHT)),(66,24+(attempts_left*ROW_HEIGHT))]
     for color,coordinate in zip(response,responseCoordinates):
         pygame.draw.circle(DISPLAYSURF,color,coordinate,10)
 
-def move_to_next_line(guessHistory,attemptsleft):
-    latestcolors = guessHistory[-1]
-    draw_row(latestcolors,attemptsleft)
-
-def new_submit_box(submitbox,attemptsleft):
-    attempt = 11 - attemptsleft
-    submitbox = pygame.draw.rect(DISPLAYSURF,GREEN,(8,732-(72*attempt),85,51))
+def new_submit_box(attemptsleft,color=GREEN):
+    '''Create a new submit box. Location based on num of attempts left. Default color green'''
+    attempt = 10 - attemptsleft
+    submitbox = pygame.draw.rect(DISPLAYSURF,color,(8,732-(72*attempt),85,51))
     #Text label for the submit box
-    font=pygame.font.SysFont('Arial',25)
-    text = font.render('SUBMIT',True,WHITE)
-    DISPLAYSURF.blit(text,(11,25+((attemptsleft-1)*72)))
+    fontObj=pygame.freetype.SysFont('Arial',25)
+    fontObj.render_to(DISPLAYSURF,(11,25+(attemptsleft*ROW_HEIGHT)),'SUBMIT',WHITE)
+    pygame.display.update()
     return submitbox
     
 
-def new_active_row(activerow,attemptsleft):
-    del activerow[:]
-    for i in range(4):
-        circle=Circle(RED,(130+(30*(i+1))+(i*50)),36+((attemptsleft)*72))
+def new_active_row(attemptsleft,colors=[RED,RED,RED,RED]):
+    '''Create a new active row based on num of attempts left'''
+    activerow=[]
+    for i,color in enumerate(colors):
+        circle=Circle(color,INITIAL_CIRCLE_X+(i*CIRCLE_GAP),
+                      INITIAL_CIRCLE_Y+(attemptsleft*ROW_HEIGHT))
         activerow.append(circle)
+    return activerow
     
     
 def main():
@@ -172,7 +178,7 @@ def main():
     global DISPLAYSURF
     DISPLAYSURF = pygame.display.set_mode((450,792))
     pygame.display.set_caption('Mastermind - The code breaking game')
-    background = pygame.image.load('assets\\woodbackground.png')
+    background = pygame.image.load('assets/woodbackground.png')
     DISPLAYSURF.blit(background,(0,0))
     
     #FPS clock
@@ -184,70 +190,70 @@ def main():
     #Initialize game variables
     attempts_left = 10
     FPS = 60
+    
+    #create secret code
     COLORS = [RED,GREEN,BLUE,YELLOW,PINK,BROWN]
     SECRETCODE = get_random_secret_code(COLORS)
     
-    #testing
     draw_hidden_code()
     
-    #Create a submit box 
-    submitbox = pygame.draw.rect(DISPLAYSURF,GREEN,(8,732,85,51))
-    #Text label for the submit box
-    font=pygame.font.SysFont('Arial',25)
-    text = font.render('SUBMIT',True,WHITE)
-    DISPLAYSURF.blit(text,(11,745))
+    #Create submit box
+    submitbox = new_submit_box(attempts_left)
     
-    #Create lists to store guesses and response history
+    #Create lists to store guesses
     guessHistory = []
-    responseHistory = []
-    #Create interactive row
-    activerow = []
-    for i in range(4):
-        circle=Circle(RED,(130+(30*(i+1))+(i*50)),756)
-        activerow.append(circle)
+
+    #Create an interactive row where you can toggle colors.
+    activerow = new_active_row(attempts_left)
     
+    #Main game loop
     while True:
+        moved = False
+        clicked = False
         for event in pygame.event.get():
-            mousex,mousey=0,0
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.MOUSEMOTION:
                 mousex, mousey = event.pos
-                print(mousex,mousey)
+                moved = True
             elif event.type == pygame.MOUSEBUTTONUP:
                 clickx,clicky = event.pos
-                for circle in activerow:
-                    if circle.rect.collidepoint(clickx,clicky):
-                        circle.toggle_color()
+                clicked = True
+            
+            #Handle mouse movement over submit box
+            if moved:
+                if submitbox.collidepoint(mousex,mousey):
+                    submitbox = new_submit_box(attempts_left,color=DARKERGREEN)
+                else:
+                    submitbox = new_submit_box(attempts_left,color=GREEN)
+            
+            #Handle clicks
+            if clicked:
                 if submitbox.collidepoint(clickx,clicky):
                     #Submit button is clicked
                     activecolors = [circle.color for circle in activerow]
                     response=check_solution(activecolors,SECRETCODE)
                     guessHistory.append(activecolors)
                     responseHistory.append(response)
-                    submitbox=new_submit_box(submitbox,attempts_left)
+                    submitbox=new_submit_box(attempts_left)
                     draw_response(response,attempts_left)
                     attempts_left-=1
                     if response.count(WHITE)==4:
-                        show_secret_code(SECRETCODE)
+                        show_hidden_code(SECRETCODE)
                         victory_animation(background,SECRETCODE)
                     if attempts_left==0:
-                        show_secret_code(SECRETCODE)
+                        show_hidden_code(SECRETCODE)
                         losing_animation(background,SECRETCODE)                    
-                    new_active_row(activerow,attempts_left)
-            
-            #Handle mouse movement over submit box
-            if submitbox.collidepoint(mousex,mousey):
-                submitbox=submitbox = pygame.draw.rect(DISPLAYSURF,DARKERGREEN,submitbox)
-                DISPLAYSURF.blit(text,(11,745-(72*(10-attempts_left))))
-            else:
-                submitbox=submitbox = pygame.draw.rect(DISPLAYSURF,GREEN,submitbox)
-                DISPLAYSURF.blit(text,(11,745-(72*(10-attempts_left))))
-            
+                    activerow = new_active_row(attempts_left,guessHistory[-1])
+                else:
+                    #Check for clicks on active row circles
+                    for circle in activerow:
+                        if circle.rect.collidepoint(clickx,clicky):
+                            circle.toggle_color()
+                    
         pygame.display.update()
-        FPSClock.tick(FPS)
-                
+        FPSClock.tick(FPS)         
 
 if __name__=='__main__':
     main()
