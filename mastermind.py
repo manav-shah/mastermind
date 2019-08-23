@@ -29,8 +29,7 @@ class Circle:
         self.color=color
         self.coordinate = x,y
         self.radius = CIRCLE_RADIUS
-        self.rect=pygame.draw.circle(DISPLAYSURF,color,self.coordinate,
-                                     self.radius)
+        self.rect=pygame.draw.circle(DISPLAYSURF,color,self.coordinate,self.radius)
     
     def toggle_color(self):
         toggle_dict = {RED:GREEN, GREEN:BLUE, BLUE:YELLOW, YELLOW:PINK,
@@ -60,30 +59,31 @@ def draw_row(colors,attemptsleft):
                            CIRCLE_RADIUS)
 
 def check_solution(guess,SECRETCODE):
-    '''Checks if a solution is valid. Returns a shuffled list of white/black 
-        based on how correct guess is.'''
-    secretcode=list(SECRETCODE)
-    guess=guess[:]
     response=[]
-    isexactmatch=[]
-    for i in range(4):
-        if guess[i]==secretcode[i]:
+    #make copies of guess and secretcode to prevent aliasing
+    SECRETCODE=list(SECRETCODE)
+    guess = guess[:]
+    for i,color in enumerate(guess):
+        if SECRETCODE[i]==color:
+            #correct color and position
+            #override values since they have been considered once
+            SECRETCODE[i]=None
+            guess[i]=None
             response.append(WHITE)
-            isexactmatch.append(True)
-        else:
-            isexactmatch.append(False)
-        
-    guess = [guess[i] for i in range(4) if isexactmatch[i]==False]
-    secretcode = [secretcode[i] for i in range(4) if isexactmatch[i]==False]
-
-    for color in set(guess):
-        n = min(guess.count(color),secretcode.count(color))
-        for i in range(n):
+    for i,color in enumerate(guess):
+        if color == None:
+            #overriden value
+            pass
+        elif color in SECRETCODE:
+            #right color in wrong position
+            guess[i]=None
+            x=SECRETCODE.index(color)
+            SECRETCODE[x]=None
             response.append(BLACK)
-    random.shuffle(response)
     return response
-          
+    
 def draw_hidden_code():
+    '''Draws hidden code row to begin game'''
     #Draw 4 gray circles
     for i in range(4):
         pygame.draw.circle(DISPLAYSURF,GRAY,(INITIAL_CIRCLE_X+(i*CIRCLE_GAP),
@@ -166,8 +166,7 @@ def new_active_row(attemptsleft,colors=[RED,RED,RED,RED]):
     '''Create a new active row based on num of attempts left'''
     activerow=[]
     for i,color in enumerate(colors):
-        circle=Circle(color,INITIAL_CIRCLE_X+(i*CIRCLE_GAP),
-                      INITIAL_CIRCLE_Y+(attemptsleft*ROW_HEIGHT))
+        circle=Circle(color,INITIAL_CIRCLE_X+(i*CIRCLE_GAP),INITIAL_CIRCLE_Y+(attemptsleft*ROW_HEIGHT))
         activerow.append(circle)
     return activerow
     
@@ -194,8 +193,9 @@ def main():
     #create secret code
     COLORS = [RED,GREEN,BLUE,YELLOW,PINK,BROWN]
     SECRETCODE = get_random_secret_code(COLORS)
-    
+
     draw_hidden_code()
+    show_hidden_code(SECRETCODE)
     
     #Create submit box
     submitbox = new_submit_box(attempts_left)
@@ -234,8 +234,7 @@ def main():
                     #Submit button is clicked
                     activecolors = [circle.color for circle in activerow]
                     response=check_solution(activecolors,SECRETCODE)
-                    guessHistory.append(activecolors)
-                    responseHistory.append(response)
+                    guessHistory.append(tuple(activecolors))
                     submitbox=new_submit_box(attempts_left)
                     draw_response(response,attempts_left)
                     attempts_left-=1
